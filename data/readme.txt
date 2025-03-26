@@ -1,0 +1,1 @@
+Nella directory padre di questo file metti il file .mbtiles che hai scaricato dal link.
