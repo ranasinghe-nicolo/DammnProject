@@ -1,0 +1,32 @@
+version: "3.8"
+services:
+  tileserver:
+    image: maptiler/tileserver-gl
+    ports:
+      - "9090:8080"
+    volumes:
+      - ./data:/data
+      - ./tileserver/config.json:/config.json
+    environment:
+      - NODE_ENV=production
+
+  raw-data-management:
+    build: ./server
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./server:/app
+    devices:
+      - "/dev/cu.usbmodem11101:/dev/cu.usbmodem11101"  # Mappa tutta la directory /dev (ATTENZIONE: espone tutti i device al container)
+    privileged: true  # Necessario per avere accesso completo ai dispositivi
+    working_dir: /app
+    command: ["python3", "server.py"]
+
+  dammnproject-webapp:
+    build: ./static
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./static:/app

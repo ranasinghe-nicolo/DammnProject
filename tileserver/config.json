@@ -1,0 +1,16 @@
+{
+    "options": {
+      "serveAllFonts": true
+    },
+    "styles": {
+      "basic": {
+        "style": "basic"
+      }
+    },
+    "data": {
+      "italy": {
+        "mbtiles": "/data/italy.mbtiles"
+      }
+    }
+  }
+  
