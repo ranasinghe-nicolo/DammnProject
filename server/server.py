@@ -10,9 +10,8 @@ app = Flask(__name__)
 sock = Sock(app)
 ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
 
-# Inizializza coords e timestamp a None
+# Inizializza coords e timestamp a None boh
 coords = None
-timestamp = None
 
 # Lista per le connessioni WebSocket attive
 active_ws_connections = []
@@ -23,10 +22,9 @@ def handle_ws(ws):
     active_ws_connections.append(ws)
     try:
         while True:
-            # Se coords è ancora None, aspetta il primo dato valido
             if coords is not None:
                 ws.send(json.dumps(coords))
-            time.sleep(0.1)  # Evita di saturare la CPU
+            time.sleep(0.1)  # Evita di saturare la CPU (Resource Manager Approved)
     except Exception as e:
         print(f"Client disconnesso: {e}")
     finally:
@@ -35,56 +33,48 @@ def handle_ws(ws):
 def run_server():
     """Loop principale per lettura seriale e invio WebSocket."""
     global coords
-    global timestamp
     while True:
         try:
-            # Leggi dati dalla porta seriale
             riga = ser.readline().decode("utf-8").strip()
             if riga:
-                # Estrai coordinate e timestamp dal messaggio NMEA $GPGGA
                 match = re.search(
-                    r'\$GPGGA,(\d{6}\.\d{2}),(\d+\.\d+),([NS]),(\d+\.\d+),([EW])',
+                    r'\$GPGGA,(\d{6}),(\d{2})(\d{2}\.\d+),([NS]),(\d{3})(\d{2}\.\d+),([EW])',
                     riga
                 )
                 if match:
-                    # Estrai e formatta il timestamp
-                    timestamp_raw = match.group(1)   # formato hhmmss.xx
-                    timestamp = timestamp_raw[:6]      # prendiamo solo hhmmss
-                    ore = timestamp[:2]
-                    minuti = timestamp[2:4]
-                    secondi = timestamp[4:6]
+                    # Estrai timestamp
+                    timestamp = match.group(1)
+                    ore, minuti, secondi = timestamp[:2], timestamp[2:4], timestamp[4:6]
                     tempo_formattato = f"{ore}:{minuti}:{secondi}"
                     
                     # Converte le coordinate
-                    lat = float(match.group(2)) / 100
-                    if match.group(3) == 'S':
+                    lat = float(match.group(2)) + (float(match.group(3)) / 60)
+                    if match.group(4) == 'S':
                         lat = -lat
-                    lon = float(match.group(4)) / 100
-                    if match.group(5) == 'W':
+                    lon = float(match.group(5)) + (float(match.group(6)) / 60)
+                    if match.group(7) == 'W':
                         lon = -lon
                     
-                    # Crea il nuovo dizionario per le coordinate
-                    new_coords = {"lat": lat, "lon": lon}
+                    new_coords = {"lat": lat, "lon": lon, "ora": tempo_formattato}
                     
-                    # Aggiorna coords solo se è il primo dato o se è cambiato
                     if coords != new_coords:
                         coords = new_coords
-                        print(f"{coords}")
+                        print(f"📡 Nuove coordinate inviate: {coords}")
                         
-                        # Invia le nuove coordinate a tutti i client WebSocket connessi
                         for ws in active_ws_connections.copy():
                             try:
                                 ws.send(json.dumps(coords))
                             except Exception as e:
                                 print(f"Errore nell'invio a un client: {e}")
                                 active_ws_connections.remove(ws)
-                        
-                        # Scrive le coordinate e il timestamp nel file CSV
+                        # Scrive le cose sul coso del report.csv
                         with open('report.csv', 'a', newline='') as report_file:
-                            riga_csv = f"lat: {lat}, lon: {lon}, ora: {tempo_formattato}"
+                            # mand un timestamp, lat e lon
+                            riga_csv = f"{tempo_formattato},{lat},{lon}"
                             report_file.write(riga_csv + "\n")
-            
-            time.sleep(0.1)  # Pausa per ridurre l'uso della CPU
+                            report_file.flush()  # lo sforza il coso a scrivere le robe 
+
+            time.sleep(0.1)
 
         except serial.SerialException as e:
             print(f"Errore seriale: {e}")
@@ -94,13 +84,11 @@ def run_server():
             time.sleep(1)
 
 if __name__ == '__main__':
-    # Avvia Flask in un thread separato
     flask_thread = threading.Thread(
         target=app.run,
-        kwargs={"host": "0.0.0.0", "port": 5000, "debug": False, "use_reloader": False}
+        kwargs={"host": "0.0.0.0", "port": 5000, "debug": False, "use_reloader": False} # invia la stringa di stronzi alla porta 5000 per coso html
     )
     flask_thread.daemon = True
     flask_thread.start()
 
-    # Avvia il loop principale per la lettura seriale
     run_server()

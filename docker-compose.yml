@@ -9,6 +9,8 @@ services:
       - ./tileserver/config.json:/config.json
     environment:
       - NODE_ENV=production
+    networks:
+      - dammnproject
 
   raw-data-management:
     build: ./server
@@ -18,10 +20,12 @@ services:
     volumes:
       - ./server:/app
     devices:
-      - "/dev/cu.usbmodem11101:/dev/cu.usbmodem11101"  # Mappa tutta la directory /dev (ATTENZIONE: espone tutti i device al container)
+      - "/dev/ttyACM0:/dev/ttyACM0"  # Mappa tutta la directory /dev (ATTENZIONE: espone tutti i device al container)
     privileged: true  # Necessario per avere accesso completo ai dispositivi
     working_dir: /app
     command: ["python3", "server.py"]
+    networks:
+      - dammnproject
 
   dammnproject-webapp:
     build: ./static
@@ -30,3 +34,10 @@ services:
       - "8080:8080"
     volumes:
       - ./static:/app
+    networks:
+      - dammnproject
+
+networks:
+  dammnproject:
+    driver: bridge  
+ 
