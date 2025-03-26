@@ -1,11 +1,12 @@
 # DammnProject
 <u>**Progetto Dammn**</u><br>
 **Steps**: <br>
-<u>*Step 0*</u>: **Clona** la repo.<br>
 
-<u>*Step 1*</u>: Nella cartella **'data'** va inserita la **mappa** italiana o la mappa che desideri in formato **'.mbtiles'**. Qua potrai scaricarti la mappa gratuita di openstreet maps: https://data.maptiler.com/downloads/planet/ <br>
+- <u>*Step 0*</u>: **Clona** la repo.<br>
 
-<u>*Step 2*</u>: dentro la directory **'DAMMNPROJECT'** fai docker compose up --build <br>
+- <u>*Step 1*</u>: Nella cartella **'data'** va inserita la **mappa** italiana o la mappa che desideri in formato **'.mbtiles'**. Qua potrai scaricarti la mappa gratuita di openstreet maps: https://data.maptiler.com/downloads/planet/ <br>
+
+- <u>*Step 2*</u>: dentro la directory **'DAMMNPROJECT'** fai docker compose up --build <br>
 
 
 *info :* 
