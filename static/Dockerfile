@@ -1,14 +1,20 @@
-# Use an official Python runtime as a parent image
+# Usa un'immagine ufficiale di Python come base. 
+# Questo significa che stiamo partendo da un'immagine già pronta con Python installato.
 FROM python:3
 
-# Set the working directory in the container
+# Imposta la cartella di lavoro all'interno del container su "/app".
+# Tutti i comandi successivi verranno eseguiti in questa cartella.
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
+# Copia tutti i file e le cartelle dalla cartella corrente del tuo computer
+# all'interno del container nella cartella /app.
 COPY . /app
 
-# Expose port 8080 to allow external access
+# Dice a Docker di esporre la porta 8080.
+# Questo permette ad altri dispositivi di connettersi al container attraverso questa porta.
 EXPOSE 8080
 
-# Run the Python HTTP server
+# Esegue il server HTTP di Python.
+# Il comando avvia il modulo http.server che serve i file nella directory corrente.
+# La porta 8080 è quella su cui il server ascolta le richieste.
 CMD ["python3", "-m", "http.server", "8080"]

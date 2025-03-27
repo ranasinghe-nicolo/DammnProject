@@ -1,10 +1,14 @@
+/* Queste regole si applicano a tutto l'HTML e il body della pagina */
+/* Imposta l'altezza al 100% della finestra, e toglie margini e spazi vuoti */
 html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
+    height: 100%;   /* L'html e il body occupano il 100% dell'altezza disponibile */
+    margin: 0;      /* Rimuove i margini attorno alla pagina */
+    padding: 0;     /* Rimuove gli spazi interni alla pagina */
 }
 
+/* Questa regola si applica al div con id "map" */
+/* Rende la mappa larga come la finestra e alta quanto l'intera altezza della viewport */
 #map {
-    width: 100%;
-    height: 100vh; /* Full height of the viewport */
+    width: 100%;      /* La mappa occupa il 100% della larghezza della finestra */
+    height: 100vh;    /* "100vh" significa che la mappa occupa il 100% dell'altezza visibile della finestra */
 }

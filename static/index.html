@@ -1,34 +1,55 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+    <!-- Qui definiamo il tipo di documento e la lingua (italiano) -->
     <meta charset="UTF-8">
+    <!-- Questo meta serve a far capire al browser come deve mostrare la pagina sui dispositivi (tipo smartphone, tablet, PC) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Il titolo della pagina che vedrai sulla scheda del browser -->
     <title>Mappa Offline - Mario Rossi</title>
+    <!-- Colleghiamo il foglio di stile personalizzato "style.css" per dare un aspetto alla pagina -->
     <link rel="stylesheet" href="style.css">
+    <!-- Importa la libreria Leaflet, che serve per creare mappe interattive -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Importa il foglio di stile di Leaflet per rendere la mappa bella e funzionante -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <style>
+        /* Rimuoviamo margini e spazi vuoti per body e html, e li facciamo occupare tutto lo schermo */
         body, html { margin: 0; padding: 0; height: 100%; }
+        /* Il div con id "map" occuperà tutta l'altezza (100vh) e larghezza (100vw) della finestra */
         #map { height: 100vh; width: 100vw; }
     </style>
 </head>
 <body>
+    <!-- Questo div è il contenitore dove apparirà la mappa -->
     <div id="map"></div>
 
     <script>
+        // Crea la mappa nel div "map", centrata sulle coordinate [45.4384, 10.9916] e con zoom iniziale 15.
         var map = L.map('map').setView([45.4384, 10.9916], 15);
+
+        // Aggiunge uno "strato di piastrelle" (tile layer) alla mappa che si scarica dal server locale.
         L.tileLayer('http://localhost:9090/styles/basic-preview/512/{z}/{x}/{y}.png', {
+            // Dà credito ai contributori di OpenStreetMap per i dati della mappa.
             attribution: '&copy; OpenStreetMap contributors',
+            // Imposta lo zoom massimo e minimo per la mappa.
             maxZoom: 20,
             minZoom: 6
         }).addTo(map);
 
+        // Crea un marcatore (un puntino) sulle coordinate specificate e gli aggiunge una finestra popup con il nome "Mario Rossi".
         var marker = L.marker([45.4384, 10.9916]).addTo(map).bindPopup("Mario Rossi");
 
+        // Apre una connessione WebSocket per ricevere aggiornamenti in tempo reale dalle coordinate.
         var ws = new WebSocket("ws://localhost:5000/coords");
+
+        // Quando il WebSocket riceve un messaggio...
         ws.onmessage = function(event) {
+            // Converte il messaggio JSON in un oggetto JavaScript.
             var data = JSON.parse(event.data);
+            // Aggiorna la posizione del marcatore con le nuove coordinate ricevute.
             marker.setLatLng([data.lat, data.lon]);
+            // Sposta il centro della mappa verso le nuove coordinate, mantenendo lo stesso livello di zoom.
             map.setView([data.lat, data.lon], map.getZoom());
         };
     </script>

@@ -1,43 +1,70 @@
+# Questa riga indica la versione del formato docker-compose che stiamo usando.
 version: "3.8"
+
+# Qui definiamo i servizi, cioè le "app" che vogliamo far girare insieme.
 services:
+  # Primo servizio: tileserver. Questo server serve le mappe.
   tileserver:
+    # Usa l'immagine ufficiale "maptiler/tileserver-gl".
     image: maptiler/tileserver-gl
+    # Collega la porta 8080 del container alla porta 9090 del nostro computer.
     ports:
       - "9090:8080"
+    # Qui colleghiamo delle cartelle e file del nostro computer con quelli del container:
     volumes:
+      # Collega la cartella "data" del nostro computer alla cartella "/data" del container.
       - ./data:/data
+      # Collega il file di configurazione del tileserver al percorso "/config.json" nel container.
       - ./tileserver/config.json:/config.json
+    # Imposta una variabile d'ambiente per indicare che il server gira in modalità "production" (per usi seri).
     environment:
       - NODE_ENV=production
+    # Specifica la rete su cui far comunicare i container (qui chiamata "dammnproject").
     networks:
       - dammnproject
 
+  # Secondo servizio: raw-data-management. Questo servizio gestisce i dati grezzi dal dispositivo.
   raw-data-management:
+    # Costruisce l'immagine usando il Dockerfile presente nella cartella "server".
     build: ./server
+    # Se il servizio si ferma, viene automaticamente riavviato.
     restart: always
+    # Collega la porta 5000 del container alla porta 5000 del nostro computer.
     ports:
       - "5000:5000"
+    # Collega la cartella "server" del nostro computer alla cartella "/app" del container.
     volumes:
       - ./server:/app
+    # Mappa il dispositivo /dev/ttyACM0 del computer al container, così il container può accedere al dispositivo.
     devices:
-      - "/dev/ttyACM0:/dev/ttyACM0"  # Mappa tutta la directory /dev (ATTENZIONE: espone tutti i device al container)
-    privileged: true  # Necessario per avere accesso completo ai dispositivi
+      - "/dev/ttyACM0:/dev/ttyACM0"  # Mappa il dispositivo specifico; attenzione, questo espone il dispositivo al container.
+    # Dà al container i privilegi necessari per accedere a tutti i dispositivi (accesso completo).
+    privileged: true
+    # Imposta la cartella di lavoro all'interno del container.
     working_dir: /app
+    # Il comando da eseguire all'avvio: avvia il file server.py con Python.
     command: ["python3", "server.py"]
+    # Collega questo container alla rete "dammnproject".
     networks:
       - dammnproject
 
+  # Terzo servizio: dammnproject-webapp. Questo è il sito web.
   dammnproject-webapp:
+    # Costruisce l'immagine usando il Dockerfile presente nella cartella "static".
     build: ./static
+    # Se il servizio si ferma, viene automaticamente riavviato.
     restart: always
+    # Collega la porta 8080 del container alla porta 8080 del nostro computer.
     ports:
       - "8080:8080"
+    # Collega la cartella "static" del nostro computer alla cartella "/app" del container.
     volumes:
       - ./static:/app
+    # Collega questo container alla rete "dammnproject".
     networks:
       - dammnproject
 
+# Qui definiamo la rete che permette ai container di parlare tra loro.
 networks:
   dammnproject:
-    driver: bridge  
- 
+    driver: bridge  # Usa il driver "bridge" per creare una rete isolata e privata per i container.
