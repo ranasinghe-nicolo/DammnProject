@@ -1,36 +1,94 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mappa Offline - Mario Rossi</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <style>
-        body, html { margin: 0; padding: 0; height: 100%; }
-        #map { height: 100vh; width: 100vw; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mappa Offline - Mario Rossi</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Caricamento dei file Leaflet in locale -->
+  <link rel="stylesheet" href="leaflet/leaflet.css">
+  <script src="leaflet/leaflet.js"></script>
 </head>
 <body>
-    <div id="map"></div>
+  <div id="map"></div>
+  
+  <!-- Box log con lista ricevitori e log dettagliati -->
+  <div id="log-container">
+    <div id="receiver-list">
+      <h3>📡 Ricevitori attivi</h3>
+      <ul id="receiver-list-items"></ul>
+    </div>
+    <div id="log-list">
+      <div class="log-header">
+        <span class="log-position-header">🗺 Ultime posizioni</span>
+        <span class="log-time-header">🕒 Data e ora</span>
+      </div>
+      <ul id="log-entries"></ul>
+    </div>
+  </div>
 
-    <script>
-        var map = L.map('map').setView([45.4384, 10.9916], 15);
-        L.tileLayer('http://localhost:9090/styles/basic-preview/512/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-            maxZoom: 20,
-            minZoom: 6
-        }).addTo(map);
+  <script>
+    var map = L.map('map').setView([45.4384, 10.9916], 15);
+    L.tileLayer('http://localhost:9090/styles/basic-preview/512/{z}/{x}/{y}.png', {
+      attribution: '&copy; DammnProjectMaps',
+      maxZoom: 20,
+      minZoom: 6
+    }).addTo(map);
 
-        var marker = L.marker([45.4384, 10.9916]).addTo(map).bindPopup("Mario Rossi");
+    // Icona personalizzata rossa per il marker
+    var redIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
 
-        var ws = new WebSocket("ws://localhost:5000/coords");
-        ws.onmessage = function(event) {
-            var data = JSON.parse(event.data);
-            marker.setLatLng([data.lat, data.lon]);
-            map.setView([data.lat, data.lon], map.getZoom());
-        };
-    </script>
+    // Mappa per i marker multipli per vari ricevitori
+    var markers = {};
+
+    var ws = new WebSocket("ws://localhost:5000/coords");
+
+    ws.onmessage = function(event) {
+      var data = JSON.parse(event.data);
+      var receiver = data.receiver || "Mario Rossi"; // Se non specificato, default a Mario Rossi
+      
+      // Controlla se il marker esiste già per questo ricevitore
+      if (!markers[receiver]) {
+        markers[receiver] = L.marker([data.lat, data.lon], {icon: redIcon})
+          .addTo(map)
+          .bindPopup(`${receiver}`);
+      } else {
+        markers[receiver].setLatLng([data.lat, data.lon]);
+      }
+      
+      map.setView([data.lat, data.lon], map.getZoom());
+
+      // Aggiorna lista ricevitori attivi
+      var receiverList = document.getElementById("receiver-list-items");
+      if (!document.getElementById("receiver-" + receiver)) {
+        var li = document.createElement("li");
+        li.id = "receiver-" + receiver;
+        li.textContent = `📡 ${receiver}`;
+        receiverList.appendChild(li);
+      }
+
+      // Crea la data e l'orario attuali
+      var now = new Date();
+      var formattedDateTime = now.toLocaleString();
+
+      // Aggiorna log con nuova posizione e data/ora
+      var logList = document.getElementById("log-entries");
+      var logEntry = document.createElement("li");
+      logEntry.innerHTML = `
+        <div class="log-info">
+          <span class="log-position">🏃‍♂️ <strong>${receiver}</strong>: Lat ${data.lat.toFixed(6)}, Lon ${data.lon.toFixed(6)}</span>
+          <span class="log-time">${formattedDateTime}</span>
+        </div>
+      `;
+      logList.prepend(logEntry); // Aggiunge in cima
+    };
+  </script>
 </body>
 </html>
